@@ -1,10 +1,11 @@
-import { View, Text, Image, Pressable, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native'
+import { View, Modal, Text, Image, Pressable, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native'
 import React, { useState, useEffect } from 'react';
 import { SafeAreaView } from "react-native-safe-area-context";
 import COLORS from '../../constants/colors';
 import { Ionicons } from "@expo/vector-icons";
 import Checkbox from "expo-checkbox"
 import Button from '../../components/Button';
+import TermsAndConditionsContent from './TermsAndConditionsContent';
 
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, addDoc } from 'firebase/firestore';
@@ -20,6 +21,7 @@ import {
 const SignUpScreen = ({ navigation }) => {
     const [isPasswordShown, setIsPasswordShown] = useState(false);
     const [isChecked, setIsChecked] = useState(false);
+    const [modalVisible, setModalVisible] = useState(false);
         const [email, setEmail] = useState('');
         const [password, setPassword] = useState('');
         const [name, setName] = useState('');
@@ -200,18 +202,46 @@ const SignUpScreen = ({ navigation }) => {
                         color={isChecked ? COLORS.primary : undefined}
                     />
 
-                    <Text>I agree to the terms and conditions</Text>
+                    <Text>I agree to the </Text>
+                    <Pressable onPress={() => setModalVisible(true)}>
+                    <Text style={{
+                    color: '#3670d4',
+                    textDecorationLine: 'underline',
+                    }}>Terms and Conditions</Text>
+                        </Pressable>
+                        <Modal
+                            animationType="slide"
+                            transparent={true}
+                            visible={modalVisible}
+                            onRequestClose={() => {
+                            setModalVisible(!modalVisible);
+                            }}
+                        >
+                            <View style={{
+                            flex: 1,
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            backgroundColor: 'rgba(0, 0, 0, 0.5)', // semi-transparent background
+                            }}>
+                            <TermsAndConditionsContent onClose={() => setModalVisible(false)} />
+                            </View>
+                        </Modal>
                 </View>
 
-                <Button
-                title="Sign Up"
-                onPress={onSignUp}
-                filled
-                style={{
-                    marginTop: 18,
-                    marginBottom: 4,
-                }}
-                />
+                <TouchableOpacity
+                    onPress={onSignUp}
+                    style={{
+                        backgroundColor: isChecked ? COLORS.primary : COLORS.grey, // Change button color based on checkbox state
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        height: 50,
+                        borderRadius: 10,
+                        marginVertical: 10,
+                    }}
+                    disabled={!isChecked} // Disable button if checkbox is not checked
+                >
+                    <Text style={{ color: COLORS.white, fontWeight: 'bold' }}>Sign Up</Text>
+                </TouchableOpacity>
                 
 
                 

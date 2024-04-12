@@ -92,7 +92,10 @@ const ContactList = () => {
                   <Feather name="x" size={24} color="#9ca3af" />
                 </Pressable>
               </View>
-              {/* Add your contact profile content here */}
+                <TouchableOpacity style={styles.button}>
+                  <Image source={require('../../assets/Settings.png')} style={{width: 80, height: 80}} />
+                  <Text style={styles.buttonText}>Settings</Text>
+                </TouchableOpacity>
             </View>
           </View>
         </Modal>
