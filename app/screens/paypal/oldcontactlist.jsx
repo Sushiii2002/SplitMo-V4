@@ -8,6 +8,8 @@ const ContactList = () => {
   const [searchText, setSearchText] = useState('');
   const [selectedContact, setSelectedContact] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [selectedContacts, setSelectedContacts] = useState([]);
+  const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
 
   useEffect(() => {
     const fetchContacts = async () => {
@@ -30,8 +32,25 @@ const ContactList = () => {
   );
 
   const handleContactPress = (contact) => {
-    setSelectedContact(contact);
-    setShowModal(true);
+    if (isMultiSelectMode) {
+      handleContactSelection(contact);
+    } else {
+      setSelectedContact(contact);
+      setShowModal(true);
+    }
+  };
+
+  const handleContactSelection = (contact) => {
+    if (selectedContacts.includes(contact)) {
+      setSelectedContacts(selectedContacts.filter((c) => c !== contact));
+    } else {
+      setSelectedContacts([...selectedContacts, contact]);
+    }
+  };
+
+  const handleLongPress = (contact) => {
+    setIsMultiSelectMode(true);
+    handleContactSelection(contact);
   };
 
   const handleMenuPress = (contact) => {
@@ -39,9 +58,26 @@ const ContactList = () => {
     setShowModal(true);
   };
 
+  const handleSelectAll = () => {
+    if (selectedContacts.length === contacts.length) {
+      setSelectedContacts([]);
+    } else {
+      setSelectedContacts(contacts);
+    }
+  };
+
+  const handleExitMultiSelect = () => {
+    setIsMultiSelectMode(false);
+    setSelectedContacts([]);
+  };
+
   const renderItem = ({ item }) => (
     <View style={styles.cardWrapper}>
-      <TouchableOpacity style={styles.card} onPress={() => handleContactPress(item)}>
+      <TouchableOpacity
+        style={styles.card}
+        onPress={() => handleContactPress(item)}
+        onLongPress={() => handleLongPress(item)}
+      >
         {item.image ? (
           <Image source={{ uri: item.image }} style={styles.cardImg} />
         ) : (
@@ -50,29 +86,48 @@ const ContactList = () => {
           </View>
         )}
         <View style={styles.cardBody}>
-          <Text style={styles.cardTitle}>{`${item.firstName} ${item.lastName}`}</Text>
-          <Text style={styles.cardPhone}>{item.phoneNumbers?.length > 0 ? item.phoneNumbers[0].number : ''}</Text>
+          <Text style={[styles.cardTitle, selectedContacts.includes(item) && styles.selectedContact]}>{`${item.firstName} ${item.lastName}`}</Text>
+          <Text style={[styles.cardPhone, selectedContacts.includes(item) && styles.selectedContact]}>{item.phoneNumbers?.length > 0 ? item.phoneNumbers[0].number : ''}</Text>
         </View>
-        <Pressable style={styles.cardAction} onPress={() => handleMenuPress(item)}>
-          <Feather name="more-vertical" size={24} color="#9ca3af" />
-        </Pressable>
+        {isMultiSelectMode && (
+          <Pressable style={styles.cardAction} onPress={() => handleContactSelection(item)}>
+            <Feather name={selectedContacts.includes(item) ? 'check-square' : 'square'} size={24} color="#9ca3af" />
+          </Pressable>
+        )}
+        {!isMultiSelectMode && (
+          <Pressable style={styles.cardAction} onPress={() => handleMenuPress(item)}>
+            <Feather name="more-vertical" size={24} color="#9ca3af" />
+          </Pressable>
+        )}
       </TouchableOpacity>
     </View>
   );
 
   return (
     <SafeAreaView style={styles.container}>
-       <View style={{backgroundColor: '#E7B10A'}}>
-            <View style={styles.header}>
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Search contacts"
-                value={searchText}
-                onChangeText={setSearchText}
-                placeholderTextColor="#aaa"
-              />
-            </View>
-       </View>
+      <View style={{ backgroundColor: '#E7B10A' }}>
+        <View style={styles.header}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search contacts"
+            value={searchText}
+            onChangeText={setSearchText}
+            placeholderTextColor="#aaa"
+          />
+          {isMultiSelectMode && (
+            <TouchableOpacity onPress={handleSelectAll} style={styles.selectAllButton}>
+              <Text style={styles.selectAllButtonText}>
+                {selectedContacts.length === contacts.length ? 'Deselect All' : 'Select All'}
+              </Text>
+            </TouchableOpacity>
+          )}
+          {isMultiSelectMode && (
+            <TouchableOpacity onPress={handleExitMultiSelect} style={styles.exitButton}>
+              <Feather name="x" size={24} color="#333" />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
       <FlatList
         data={filteredContacts}
         keyExtractor={(item) => item.id}
@@ -92,10 +147,9 @@ const ContactList = () => {
                   <Feather name="x" size={24} color="#9ca3af" />
                 </Pressable>
               </View>
-                <TouchableOpacity style={styles.button}>
-                  <Image source={require('../../assets/Settings.png')} style={{width: 80, height: 80}} />
-                  <Text style={styles.buttonText}>Settings</Text>
-                </TouchableOpacity>
+              <View style={styles.payPalButton}>
+                <Text style={styles.payPalButtonText}>Pay with PayPal</Text>
+              </View>
             </View>
           </View>
         </Modal>
@@ -103,6 +157,7 @@ const ContactList = () => {
     </SafeAreaView>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
@@ -114,6 +169,9 @@ const styles = StyleSheet.create({
     marginTop: 40,
     paddingVertical: 16,
     paddingHorizontal: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   searchInput: {
     backgroundColor: '#fff',
@@ -122,6 +180,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 16,
     color: '#333',
+    flex: 1,
+  },
+  selectAllButton: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginLeft: 16,
+  },
+  selectAllButtonText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  exitButton: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 8,
+    marginLeft: 16,
   },
   contactList: {
     paddingVertical: 16,
@@ -196,6 +272,19 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     color: '#000',
+  },
+  payPalButton: {
+    backgroundColor: '#ffc439',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  payPalButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
   },
 });
 
